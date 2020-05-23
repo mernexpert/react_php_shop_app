@@ -59,11 +59,11 @@ function Cart(props) {
     useEffect(() => {
         let get_cart_data_url = `${process.env.REACT_APP_API_URL}/controller/get_cart_data.php`;
         axios.get(get_cart_data_url)
-        .then(res=> {
-            console.log("I am here", res.data);
-            setLocation_arr(res.data.location);
-            setDelivery_arr(res.data.delivery);
-        })
+            .then(res => {
+                console.log("I am here", res.data);
+                setLocation_arr(res.data.location);
+                setDelivery_arr(res.data.delivery);
+            })
     }, [])
 
     const handle_change = (e, sub_key, product_key) => {
@@ -107,7 +107,8 @@ function Cart(props) {
         setTotalWeight(weight);
     }
 
-    const cart_pay = () => {
+    const cart_pay = (event) => {
+        event.preventDefault();
         let order_details = [];
         let temp_cart = cartData;
         let temp_cart_null = nullCartData;
@@ -143,39 +144,46 @@ function Cart(props) {
         })
 
         if (order_details.length) {
-            console.log(firstName, lastName, email, mobile, pick_up_option, delivery_option, address);
-            let order = {
-                order_total: totalAmount,
-                order_weight: totalWeight,
-                firstName: firstName,
-                lastName: lastName,
-                email: email,
-                phone: mobile,
-                pick_up_id: pick_up_option,
-                delivery_id: delivery_option,
-                address: address
-            }
 
-            let data = {
-                order: order,
-                order_details: order_details
+            console.log(firstName, lastName, email, mobile, pick_up_option, delivery_option, address);
+            if (pick_up_option && delivery_option) {
+                let order = {
+                    order_total: totalAmount,
+                    order_weight: totalWeight,
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    phone: mobile,
+                    pick_up_id: pick_up_option,
+                    delivery_id: delivery_option,
+                    address: address
+                }
+
+                let data = {
+                    order: order,
+                    order_details: order_details
+                }
+                console.log(data);
+                let save_pay_url = `${process.env.REACT_APP_API_URL}/controller/save_pay_data.php`;
+                axios.post(save_pay_url, data)
+                    .then(res => {
+                        console.log(res.data);
+                        alert("successfully paid");
+                        localStorage.removeItem('cartdata');
+                        localStorage.removeItem('cartdata_null');
+                        localStorage.removeItem('category');
+                        props.history.push('/');
+                    })
+                    .catch((error) => {
+                        if (error.response) {
+                            console.log(error.response.data); // => the response payload
+                        }
+                    });
             }
-            console.log(data);
-            let save_pay_url = `${process.env.REACT_APP_API_URL}/controller/save_pay_data.php`;
-            axios.post(save_pay_url, data)
-                .then(res => {
-                    console.log(res.data);
-                    alert("successfully paid");
-                    localStorage.removeItem('cartdata');
-                    localStorage.removeItem('cartdata_null');
-                    localStorage.removeItem('category');
-                    props.history.push('/');
-                })
-                .catch((error) => {
-                    if (error.response) {
-                        console.log(error.response.data); // => the response payload
-                    }
-                });
+            else alert("please select shipping detail");
+
+
+
         }
         else alert("please add quantity");
     }
@@ -183,11 +191,14 @@ function Cart(props) {
     const handle_pickup_radio = () => {
         setPickUp(true);
         setDelivery(false);
+        setDelivery_option('');
+        setAress('');
     }
 
     const handle_delivery_radio = () => {
         setDelivery(true);
         setPickUp(false);
+        setPick_up_option('');
     }
 
     return (
@@ -239,99 +250,101 @@ function Cart(props) {
 
             </div>
             <hr />
-            <div className="mr-4 personal">
-                <div className="row mb-2">
-                    <h3 className="col-12 text-danger">Personal Details</h3>
-                </div>
-                <div className="row ml-5">
-                    <div className="col mb-3">
-                        <input type="text" className="form-control" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" />
+            <form onSubmit={cart_pay}>
+                <div className="mr-4 personal">
+                    <div className="row mb-2">
+                        <h3 className="col-12 text-danger">Personal Details</h3>
                     </div>
-                    <div className="col mb-3">
-                        <input type="text" className="form-control" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name" />
+                    <div className="row ml-5">
+                        <div className="col mb-3">
+                            <input type="text" className="form-control" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name*" required />
+                        </div>
+                        <div className="col mb-3">
+                            <input type="text" className="form-control" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name*" required />
+                        </div>
                     </div>
-                </div>
-                <div className="row ml-5">
-                    <div className="col mb-3">
-                        <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
-                    </div>
-                    <div className="col mb-3">
-                        <input type="number" className="form-control" value={mobile} onChange={(e) => setMobile(e.target.value)} placeholder="Number" />
-                    </div>
-                </div>
-            </div>
-            <hr />
-            <div className="mr-4 shipping">
-                <div className="row mb-2">
-                    <h3 className="col-12 text-danger">Shipping Details</h3>
-                </div>
-                <div className="row ml-5">
-                    <div className="col-4 mb-3 ml-4 d-flex align-items-center">
-                        <input type="radio" id="pickup" name="shipping" onClick={handle_pickup_radio} className="form-check-input mt-0" checked={pickup}></input>
-                        <label className="form-check-label ml-1" htmlFor="pickup" style={{ fontSize: "18px" }}>Pick Up</label>
-                    </div>
-                    <div className="col-6 mb-3">
-                        <select id="pickup" className="form-control" value = {pick_up_option} onChange={(e) => setPick_up_option(e.target.value)} disabled={delivery}>
-                            <option>Location</option>
-                            {location_arr.map((location, key) => {
-                                return (
-                                    <option key={key} value={location.id}>{location.location}</option>
-                                )
-                            })}
-                        </select>
+                    <div className="row ml-5">
+                        <div className="col mb-3">
+                            <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email*" required />
+                        </div>
+                        <div className="col mb-3">
+                            <input type="number" className="form-control" value={mobile} onChange={(e) => setMobile(e.target.value)} placeholder="Number*" required />
+                        </div>
                     </div>
                 </div>
-                <div className="row ml-5">
-                    <div className="col-4 mb-3 ml-4 d-flex align-items-center">
-                        <input type="radio" id="delivery" name="shipping" onClick={handle_delivery_radio} className="form-check-input mt-0" checked={delivery}></input>
-                        <label className="form-check-label ml-1" htmlFor="delivery" style={{ fontSize: "18px" }}>Delivery</label>
+                <hr />
+                <div className="mr-4 shipping">
+                    <div className="row mb-2">
+                        <h3 className="col-12 text-danger">Shipping Details</h3>
                     </div>
-                    <div className="col-6 mb-3">
-                        <select id="delivery" className="form-control" value={delivery_option} onChange={(e) => setDelivery_option(e.target.value)} disabled={pickup}>
-                            <option>Town, Country</option>
-                            {delivery_arr.map((delivery, key) => {
-                                return(
-                                <option key={key} value={delivery.id}>{delivery.town}, {delivery.country}, {delivery.area}</option>
-                                )
-                            })}
-                        </select>
+                    <div className="row ml-5">
+                        <div className="col-4 mb-3 ml-4 d-flex align-items-center">
+                            <input type="radio" id="pickup" name="shipping" onClick={handle_pickup_radio} className="form-check-input mt-0" checked={pickup}></input>
+                            <label className="form-check-label ml-1" htmlFor="pickup" style={{ fontSize: "18px" }}>Pick Up</label>
+                        </div>
+                        <div className="col-6 mb-3">
+                            <select id="pickup" className="form-control" value={pick_up_option} onChange={(e) => setPick_up_option(e.target.value)} disabled={delivery} required={pickup}>
+                                <option>Location</option>
+                                {location_arr.map((location, key) => {
+                                    return (
+                                        <option key={key} value={location.id}>{location.location}</option>
+                                    )
+                                })}
+                            </select>
+                        </div>
                     </div>
-                </div>
-                <div className="row ml-5">
-                    <div className="col-4 ml-4">
+                    <div className="row ml-5">
+                        <div className="col-4 mb-3 ml-4 d-flex align-items-center">
+                            <input type="radio" id="delivery" name="shipping" onClick={handle_delivery_radio} className="form-check-input mt-0" checked={delivery}></input>
+                            <label className="form-check-label ml-1" htmlFor="delivery" style={{ fontSize: "18px" }}>Delivery</label>
+                        </div>
+                        <div className="col-6 mb-3">
+                            <select id="delivery" className="form-control" value={delivery_option} onChange={(e) => setDelivery_option(e.target.value)} disabled={pickup} required={delivery}>
+                                <option>Town, Country</option>
+                                {delivery_arr.map((delivery, key) => {
+                                    return (
+                                        <option key={key} value={delivery.id}>{delivery.town}, {delivery.country}, {delivery.area}</option>
+                                    )
+                                })}
+                            </select>
+                        </div>
                     </div>
-                    <div className="col-6 mb-3">
-                        <textarea className="form-control" placeholder="Address" value={address} onChange={(e)=> setAress(e.target.value)}></textarea>
-                    </div>
-                </div>
-            </div>
-            <hr />
-            <div className="mr-4 payment">
-                <div className="row mb-2">
-                    <h3 className="col-12 text-danger">Payment Options</h3>
-                </div>
-                <div className="row ml-5">
-                    <div className="col-4 mb-3 ml-4 d-flex align-items-center">
-                        <input type="radio" id="mpesa" name="payment_option" className="form-check-input mt-0"></input>
-                        <label className="form-check-label ml-1" htmlFor="mpesa" style={{ fontSize: "18px" }}>MPESA</label>
-                    </div>
-                </div>
-                <div className="row ml-5">
-                    <div className="col-4 mb-3 ml-4 d-flex align-items-center">
-                        <input type="radio" id="pesapal" name="payment_option" className="form-check-input mt-0"></input>
-                        <label className="form-check-label ml-1" htmlFor="pesapal" style={{ fontSize: "18px" }}>PESAPAL</label>
-                    </div>
-                </div>
-            </div>
-            <hr />
-            <div className="mr-4 paybutton">
-                <div className="row mb-2 text-center">
-                    <div className="col-9"></div>
-                    <div className="col-3">
-                        <button className="btn btn-success pay-button" onClick={cart_pay}>Pay</button>
+                    <div className="row ml-5">
+                        <div className="col-4 ml-4">
+                        </div>
+                        <div className="col-6 mb-3">
+                            <textarea className="form-control" placeholder="Address" value={address} onChange={(e) => setAress(e.target.value)} disabled={pickup} required={delivery}></textarea>
+                        </div>
                     </div>
                 </div>
-            </div>
+                <hr />
+                <div className="mr-4 payment">
+                    <div className="row mb-2">
+                        <h3 className="col-12 text-danger">Payment Options</h3>
+                    </div>
+                    <div className="row ml-5">
+                        <div className="col-4 mb-3 ml-4 d-flex align-items-center">
+                            <input type="radio" id="mpesa" name="payment_option" className="form-check-input mt-0"></input>
+                            <label className="form-check-label ml-1" htmlFor="mpesa" style={{ fontSize: "18px" }}>MPESA</label>
+                        </div>
+                    </div>
+                    <div className="row ml-5">
+                        <div className="col-4 mb-3 ml-4 d-flex align-items-center">
+                            <input type="radio" id="pesapal" name="payment_option" className="form-check-input mt-0"></input>
+                            <label className="form-check-label ml-1" htmlFor="pesapal" style={{ fontSize: "18px" }}>PESAPAL</label>
+                        </div>
+                    </div>
+                </div>
+                <hr />
+                <div className="mr-4 paybutton">
+                    <div className="row mb-2 text-center">
+                        <div className="col-9"></div>
+                        <div className="col-3">
+                            <button className="btn btn-success pay-button" type="submit">Pay</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
 
         </div>
     )

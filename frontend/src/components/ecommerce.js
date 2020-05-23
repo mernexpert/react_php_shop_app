@@ -36,6 +36,7 @@ function Ecommerce(props) {
                             })
                         })
                     }
+                    else setProductsByCategory(res.data.results)
                 }
                 else setProductsByCategory(res.data.results)
                 
@@ -179,7 +180,7 @@ function Ecommerce(props) {
                 <div className="row">
                     <button className="col-4 btn footer-item btn-success">Total Estimate Weight<br />{totalWeight}KG</button>
                     <button className="col-4 btn footer-item btn-success">Total Amount<br />{totalAmount}</button>
-                    <button className="col-4 btn footer-item btn-success" onClick={pay}>Pay<i class="fas fa-arrow-right ml-1" aria-hidden="true"></i></button>
+                    <button className="col-4 btn footer-item btn-success" onClick={pay}>Pay<i className="fas fa-arrow-right ml-1" aria-hidden="true"></i></button>
                 </div>
             </div>
             <ItemModal toggle={toggle} modal={modal} modalData={modalData} />
