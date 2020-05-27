@@ -2,24 +2,10 @@ import React, { Component, useState, useEffect } from 'react';
 import ScrollMenu from 'react-horizontal-scrolling-menu';
 import axios from 'axios';
 
-// list of items
-const list = [
-    { name: 'item1' },
-    { name: 'item2' },
-    { name: 'item3' },
-    { name: 'item4' },
-    { name: 'item5' },
-    { name: 'item6' },
-    { name: 'item7' },
-    { name: 'item8' },
-    { name: 'item9' }
-];
+function Category({selectCategory}) {
 
-
-
-function Category() {
-
-    const [selected, setSelected] = useState('item1');
+    const [selected, setSelected] = useState('');
+    const [categories, setCategories] = useState([]);
 
     const MenuItem = ({ text, selected }) => {
         return <div
@@ -27,19 +13,23 @@ function Category() {
         >{text}</div>;
     };
 
-    useEffect(()=> {
-        let get_category_url = process.env.REACT_APP_API_URL+'controller/category.php';
-        // axios.get(get_category_url, )
-    },[])
-    
-    const Menu = (list, selected) =>
-        list.map(el => {
-            const { name } = el;
-    
-            return <MenuItem text={name} key={name} selected={selected} />;
+    useEffect(() => {
+        let get_category_url = process.env.REACT_APP_API_URL + 'controller/category.php';
+        axios.get(get_category_url)
+            .then(res => {
+                console.log(res.data.results);
+                setCategories(res.data.results);
+                onSelect(res.data.results[0].id)
+            })
+    }, [])
+
+    const Menu = (categories, selected) =>
+        categories.map(el => {
+            const { name, id } = el;
+            return <MenuItem text={name} key={id} selected={selected} />;
         });
-    
-    
+
+
     const Arrow = ({ text, className }) => {
         return (
             <div
@@ -47,22 +37,19 @@ function Category() {
             >{text}</div>
         );
     };
-    
-    
+
     const ArrowLeft = Arrow({ text: '<', className: 'arrow-prev' });
     const ArrowRight = Arrow({ text: '>', className: 'arrow-next' });
 
     const onSelect = key => {
         setSelected(key);
+        selectCategory(key);
     }
-
-    const menu = Menu(list, selected)
-
 
     return (
         <div className="App">
             <ScrollMenu
-                data={menu}
+                data={Menu(categories, selected)}
                 arrowLeft={ArrowLeft}
                 arrowRight={ArrowRight}
                 selected={selected}

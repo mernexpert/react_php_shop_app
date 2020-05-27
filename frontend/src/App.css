@@ -1,4 +1,7 @@
 .header {
+  position: absolute;
+  left: 0;
+  right: 0;
   background-color: #d3d3d3;
   padding: 10px;
   top: 0;
@@ -7,8 +10,11 @@
 }
 
 .content {
+  position: absolute;
+  left: 0;
+  right: 0;
   padding: 15px;
-  top: 70px;
+  top: 80px;
   bottom: 50px;
   overflow: auto;
 }
@@ -50,4 +56,10 @@
 
 .product-name {
   cursor: pointer;
+}
+
+.modal-image {
+  width: 100%;
+  height: 270px;
+  border-radius: 5px;
 }
